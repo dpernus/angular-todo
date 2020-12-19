@@ -4,10 +4,16 @@
 <input type="text" class="todo-input" placeholder="What needs to be done" [(ngModel)]="todoTitle"
   (keyup.enter)="addTodo()">
 
-<div class="todo-item" *ngFor="let todo of todos">
+<div class="todo-item" *ngFor="let todo of todosFiltered()" @fade>
   <div class="todo-item-left">
-    <input type="checkbox">
-    <div class="todo-item-label">{{ todo.title }}</div>
+    <input type="checkbox" [(ngModel)]="todo.completed">
+    <div *ngIf="!todo.editing; else editingTodo" class="todo-item-label" [ngClass]="{'completed': todo.completed}"
+      (dblclick)="editTodo(todo)">{{ todo.title }}
+    </div>
+    <ng-template #editingTodo>
+      <input type="text" class="todo-item-edit" [(ngModel)]="todo.title" (blur)="doneEdit(todo)"
+        (keyup.enter)="doneEdit(todo)" (keyup.esc)="cancelEdit(todo)" autofocus>
+    </ng-template>
   </div>
   <div class="remove-item" (click)="deleteTodo(todo.id)">
     &times;
@@ -15,18 +21,18 @@
 </div>
 
 <div class="extra-container">
-  <div><label><input type="checkbox"> Check All</label></div>
-  <div>4 items left</div>
+  <div><label><input type="checkbox" (change)="checkAllTodos()"> Check All</label></div>
+  <div>{{ remainingTodos() }} items left</div>
 </div>
 
 <div clas="extra-container">
   <div>
-    <button class="active">All</button>
-    <button>Active</button>
-    <button>Completed</button>
+    <button [ngClass]="{'active': filter === 'all'}" (click)="filter='all'">All</button>
+    <button [ngClass]="{'active': filter === 'pending'}" (click)="filter='pending'">Pending</button>
+    <button [ngClass]="{'active': filter === 'completed'}" (click)="filter='completed'">Completed</button>
   </div>
 
-  <div>
-    <button>Clear Completed</button>
+  <div *ngIf="atLeastOneCompleted()">
+    <button (click)="clearCompleted()">Clear Completed</button>
   </div>
 </div>

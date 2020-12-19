@@ -1,15 +1,29 @@
+import { animate, style, transition, trigger } from '@angular/animations';
 import { Component, OnInit } from '@angular/core';
 import { Todo } from 'src/app/interfaces/todo';
 
 @Component({
   selector: 'todo-list',
   templateUrl: './todo-list.component.html',
-  styleUrls: ['./todo-list.component.scss']
+  styleUrls: ['./todo-list.component.scss'],
+  animations: [
+    trigger('fade', [
+      transition(':enter', [
+        style({ opacity: 0, transform: 'translateY(30px)' }),
+        animate(300, style({ opacity: 1, transform: 'translateY(0px)' }))
+      ]),
+      transition(':leave', [
+        animate(300, style({ opacity: 0, transform: 'translateY(30px)' }))
+      ]),
+    ])
+  ]
 })
 export class TodoListComponent implements OnInit {
   todos: Todo[] = [];
   todoTitle: string = '';
+  titleCache: string = '';
   idForTodo: number = 0;
+  filter: string = 'all'
 
   constructor() {
 
@@ -17,7 +31,9 @@ export class TodoListComponent implements OnInit {
 
   ngOnInit(): void {
     this.idForTodo = 4
+    this.filter = 'all'
     this.todoTitle = '';
+    this.titleCache = '';
     this.todos = [
       {
         'id': 1,
@@ -56,7 +72,49 @@ export class TodoListComponent implements OnInit {
     this.idForTodo++;
   }
 
+  editTodo(todo: Todo): void {
+    this.titleCache = todo.title
+    todo.editing = true
+  }
+
+  doneEdit(todo: Todo): void {
+    if (todo.title.trim().length === 0) {
+      todo.title = this.titleCache
+    }
+    todo.editing = false
+  }
+
+  cancelEdit(todo: Todo): void {
+    todo.title = this.titleCache
+    todo.editing = false
+  }
+
   deleteTodo(id: number): void {
     this.todos = this.todos.filter(todo => todo.id !== id)
+  }
+
+  remainingTodos(): number {
+    return this.todos.filter(todo => !todo.completed).length
+  }
+
+  atLeastOneCompleted(): boolean {
+    return (this.todos.filter(todo => todo.completed).length > 0)
+  }
+
+  clearCompleted(): void {
+    this.todos = this.todos.filter(todo => !todo.completed)
+  }
+
+  checkAllTodos(): void {
+    this.todos.forEach(todo => todo.completed = (<HTMLInputElement>event.target).checked)
+  }
+
+  todosFiltered(): Todo[] {
+    switch (this.filter) {
+      case 'all': return this.todos
+      case 'pending': return this.todos.filter(todo => !todo.completed)
+      case 'completed': return this.todos.filter(todo => todo.completed)
+      default: return this.todos;
+    }
   }
 }
